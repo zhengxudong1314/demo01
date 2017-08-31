@@ -6,19 +6,25 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.bwie.myxutils.R;
 import com.bwie.myxutils.application.MyApplication;
 import com.bwie.myxutils.bean.Student;
 
 import org.xutils.DbManager;
+import org.xutils.common.Callback;
+import org.xutils.common.task.PriorityExecutor;
 import org.xutils.ex.DbException;
+import org.xutils.http.RequestParams;
 import org.xutils.image.ImageOptions;
 import org.xutils.view.annotation.ContentView;
 import org.xutils.view.annotation.Event;
 import org.xutils.view.annotation.ViewInject;
 import org.xutils.x;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageView img;
     @ViewInject(R.id.lv)
     private ListView lv;
+    @ViewInject(R.id.progress)
+    private ProgressBar progress;
     private String img_url = "http://img2.imgtn.bdimg.com/it/u=3146783429,3997094047&fm=11&gp=0.jpg";
     private DbManager db;
     private List<Student> list = new ArrayList<>();
@@ -76,9 +84,76 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void download() {
+        RequestParams params = new RequestParams("http://169.254.222.214:8080/08web/xf.mp3");
+        params.setAutoRename(true);
+        params.setExecutor(new PriorityExecutor(3,true));
+        params.setSaveFilePath("/mnt/sdcard/xf.mp3");
+        params.setAutoResume(true);
+        x.http().post(params, new Callback.ProgressCallback<File>() {
+            @Override
+            public void onSuccess(File result) {
+                Toast.makeText(MainActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+                progress.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onWaiting() {
+
+            }
+
+            @Override
+            public void onStarted() {
+
+            }
+
+            @Override
+            public void onLoading(long total, long current, boolean isDownloading) {
+                progress.setMax((int) total);
+                progress.setProgress((int) current);
+            }
+        });
     }
 
     private void upload() {
+        RequestParams params = new RequestParams("http://169.254.222.214:8080/08web/FileUploadServlet");
+        params.setMultipart(true);
+        params.addBodyParameter("file",new File("/mnt/sdcard/mutouren1.mkv"));
+        x.http().post(params, new Callback.CommonCallback<File>() {
+
+            @Override
+            public void onSuccess(File result) {
+                Toast.makeText(MainActivity.this, "上传成功", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
     }
     //查询数据库
     private void queryData() {
